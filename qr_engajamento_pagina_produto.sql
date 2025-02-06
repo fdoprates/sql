@@ -1,0 +1,138 @@
+SELECT DISTINCT IGOP.email
+        ,P.ProductCode
+        ,p.Family
+        ,p.Category__c
+        ,COUNT(P.ProductCode) AS Qtd_ProductCode
+        ,IIF(o.Inscrito IS NULL, 0,o.Inscrito) AS Inscrito
+        ,o.Id AS OpportunityId
+        
+    FROM IGO_PROFILES AS IGOP
+    
+    INNER JOIN IGO_VIEWS AS IGOV
+    ON IGOV.user_id = IGOP.user_id
+
+    INNER JOIN ENT.Product2_Salesforce_Ensino AS P
+    ON P.ExternalId = IGOV.SKU
+
+    LEFT JOIN (SELECT DISTINCT
+                        e.EmailAddress AS Email
+                        ,oli.ProductCode
+                        ,'1' AS Inscrito
+                        ,o.Id
+                        
+                    FROM
+                        ent.Opportunity_Salesforce_Ensino o
+                        
+                    INNER JOIN ent.Account_Salesforce_Ensino a
+                    ON o.AccountId = a.Id
+
+                    INNER JOIN ent.ContactPointEmail_Salesforce_Ensino e
+                    ON a.Id = e.ParentId
+
+                    INNER JOIN ent.ContactPointPhone_Salesforce_Ensino cel
+                    ON a.Id = cel.ParentId
+
+                    INNER JOIN ent.OpportunityLineItem_Salesforce_Ensino oli
+                    ON o.Id = oli.OpportunityId
+
+                    INNER JOIN ent.Product2_Salesforce_Ensino p
+                    ON oli.Product2Id = p.Id) AS o
+    ON o.ProductCode = P.ProductCode AND o.Email = IGOP.email
+
+    GROUP BY IGOP.email,P.ProductCode,o.Inscrito,p.Family,p.Category__c,o.Id
+
+
+
+    ------------------------
+SELECT TOP 100 
+    IGOP.email,
+    o.PersonContactId AS ContactKey, 
+    P.Name AS ProductName,
+    P.ProductCode,
+    P.Family,
+    P.Category__c,
+    COUNT(P.ProductCode) AS Qtd_ProductCode,
+    IIF(o.Inscrito IS NULL, 0, o.Inscrito) AS Inscrito,
+    o.Id AS OpportunityId
+FROM IGO_PROFILES AS IGOP
+INNER JOIN IGO_VIEWS AS IGOV 
+    ON IGOV.user_id = IGOP.user_id
+INNER JOIN ENT.Product2_Salesforce_Ensino AS P 
+    ON P.ExternalId = IGOV.SKU
+LEFT JOIN (
+    SELECT 
+        a.PersonContactId,
+        e.EmailAddress AS Email,
+        oli.ProductCode,
+        '1' AS Inscrito,
+        o.Id
+    FROM ent.Opportunity_Salesforce_Ensino o
+    INNER JOIN ent.Account_Salesforce_Ensino a 
+        ON o.AccountId = a.Id
+    INNER JOIN ent.ContactPointEmail_Salesforce_Ensino e 
+        ON a.Id = e.ParentId
+    INNER JOIN ent.OpportunityLineItem_Salesforce_Ensino oli 
+        ON o.Id = oli.OpportunityId
+) AS o 
+ON o.ProductCode = P.ProductCode 
+AND o.Email = IGOP.email
+GROUP BY 
+    IGOP.email, 
+    P.ProductCode, 
+    o.Inscrito, 
+    P.Family, 
+    P.Category__c, 
+    o.Id, 
+    o.PersonContactId, 
+    P.Name
+ORDER BY o.PersonContactId
+
+
+----------------------------------------------------------
+
+SELECT DISTINCT IGOP.email
+        ,o.ContactKey
+        ,P.Name
+        ,P.ProductCode
+        ,p.Family
+        ,p.Category__c
+        ,COUNT(P.ProductCode) AS Qtd_ProductCode
+        ,IIF(o.Inscrito IS NULL, 0,o.Inscrito) AS Inscrito
+        ,o.Id AS OpportunityId
+        
+    FROM IGO_PROFILES AS IGOP
+    
+    INNER JOIN IGO_VIEWS AS IGOV
+    ON IGOV.user_id = IGOP.user_id
+
+    INNER JOIN ENT.Product2_Salesforce_Ensino AS P
+    ON P.ExternalId = IGOV.SKU
+
+    LEFT JOIN (SELECT DISTINCT
+                        a.PersonContactID AS ContactKey
+                        ,e.EmailAddress AS Email
+                        ,oli.ProductCode
+                        ,'1' AS Inscrito
+                        ,o.Id
+                        
+                    FROM
+                        ent.Opportunity_Salesforce_Ensino o
+                        
+                    INNER JOIN ent.Account_Salesforce_Ensino a
+                    ON o.AccountId = a.Id
+
+                    INNER JOIN ent.ContactPointEmail_Salesforce_Ensino e
+                    ON a.Id = e.ParentId
+
+                    INNER JOIN ent.ContactPointPhone_Salesforce_Ensino cel
+                    ON a.Id = cel.ParentId
+
+                    INNER JOIN ent.OpportunityLineItem_Salesforce_Ensino oli
+                    ON o.Id = oli.OpportunityId
+
+                    INNER JOIN ent.Product2_Salesforce_Ensino p
+                    ON oli.Product2Id = p.Id
+                    WHERE a.Optin__c = 1) AS o
+    ON o.ProductCode = P.ProductCode AND o.Email = IGOP.email
+
+    GROUP BY IGOP.email,P.ProductCode,o.Inscrito,p.Family,p.Category__c,o.Id,o.ContactKey,p.Name
