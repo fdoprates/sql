@@ -1,0 +1,46 @@
+SELECT TOP 1 WITH TIES
+    l.FirstName
+    ,l.LastName
+    ,l.ContactKey
+    ,tp.user_id
+    ,l.Email
+    ,CASE
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+            THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+            THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+    END AS Phone
+    ,'pt-br' AS Locale
+    , l.Id
+    , tp.sku
+    , tp.name AS ProductName
+FROM
+    ent.Lead_Salesforce_Ensino l
+INNER JOIN 
+    abandoned_browse_1708022992 ab ON ab.subscriber_key = l.Email
+INNER JOIN
+    (
+    SELECT
+        p.user_id
+        , p.email
+        , v.sku
+        , pr.name
+        , ROW_NUMBER() OVER (PARTITION BY p.email ORDER BY v.Timestamp DESC) AS flag
+    FROM
+        IGO_PROFILES p
+    INNER JOIN
+        IGO_VIEWS v ON p.user_id = v.user_id
+    INNER JOIN
+        IGO_PRODUCTS pr ON v.sku = pr.sku
+    ) tp ON tp.email = l.Email
+WHERE
+    l.ContactKey LIKE '003%'
+AND  l.opt_in__c = 'True'
+AND (l.FirstName NOT LIKE '%TESTE%')
+AND tp.flag = 1
+AND NOT EXISTS (SELECT '' FROM TB01_NAVEGACAO_ABANDONADA na WHERE na.ContactKey = l.ContactKey OR na.Email = l.Email)
+AND NOT EXISTS (SELECT 1 FROM TB03_NAVEGACAO_ABANDONADA_COMPRADORES pur WHERE CONVERT(CHAR(10), pur.Timestamp, 120) >= CONVERT(CHAR(10), GETDATE() -7, 120) AND tp.user_id = pur.user_id) /*--> Exclui contatos que realizaram alguma compra nos ultimos 7 dias*/
+AND NOT EXISTS (SELECT '' FROM TB02_NAVEGACAO_ABANDONADA_HISTORICO h WHERE CONVERT(CHAR(10), h.EntryDate, 120) >= CONVERT(CHAR(10), GETDATE() -11, 120) AND l.Email = h.Email) /*--> Exclui contatos que já entraram nos ultimos 7 dias, incluindo o dia atual*/
+ORDER BY
+    ROW_NUMBER() OVER (PARTITION BY l.Email ORDER BY ab.timestamp DESC)
+    
