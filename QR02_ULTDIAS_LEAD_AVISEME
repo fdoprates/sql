@@ -1,0 +1,139 @@
+SELECT DISTINCT
+A1.Id
+,A1.ContactKey
+,'LEAD' AS OpportunityId
+,A1.FirstName
+,A1.LastName
+,A1.Email
+,A1.Course__c
+,A1.Locale
+,A1.Class__C
+,P1.Course_Link__c
+,CONCAT(
+    SUBSTRING(A1.Course_Link__c, CHARINDEX('.br/', A1.Course_Link__c) + 4, LEN(A1.Course_Link__c))
+    ,'?utm_source=whatsapp&utm_medium=sffv&utm_campaign=JOR-_-WA-_-ULTDIAS-_-D5-_-01&utm_id='
+    ,A1.ContactKey
+ ) AS VA_WA_LINK
+,A1.Phone
+,A1.Category__c
+,'AVISE-ME' AS ORIGEM
+,CASE
+        WHEN A1.Category__c = 'Especialização a Distância'
+            THEN 1
+        WHEN A1.Category__c = 'Especialização Presencial' OR (A1.Category__c = 'Especialização Flexível' OR A1.Category__c = 'Especialização Híbrida')
+            THEN 1
+        WHEN A1.Category__c = 'Cursos a distância'
+            THEN 1
+        WHEN A1.Category__c = 'Atualização em Gestão Ao Vivo'
+            THEN 1
+        WHEN A1.Category__c = 'Simulação Realística'
+            THEN 1
+        WHEN A1.Category__c = 'Atualização Ao Vivo'
+            THEN 1
+        WHEN A1.Category__c = 'Atualização Flexível'
+            THEN 1
+        ELSE 0
+        END AS SEND_WHATSAPP
+,'0' AS CreateLead
+,A1.Link_Course_Image__c
+,P1.Enrollment_End_Date__c
+,A1.ProductCode
+,A1.StockKeepingUnit
+,A1.Product_name__c
+,A1.TYPE
+,CONCAT(A1.ContactKey,'_',A1.ProductCode) AS id_journey
+,A1.Opt_in__c
+FROM (SELECT DISTINCT
+    L.Id,
+    L.ContactKey,
+    L.FirstName,
+    L.LastName,
+    L.Opt_in__c,
+    L.CreatedDate,
+    L.Product_name__c,
+        CASE
+        WHEN L.Product_name__c = 'Pós-graduação' AND  L.Product_Category__c = 'Especialização Presencial'
+            THEN 'PRESENCIAL'
+        WHEN L.Product_name__c = 'Pós-graduação' AND  (L.Product_Category__c = 'Especialização Flexível' OR L.Product_Category__c = 'Especialização Híbrida')
+            THEN 'HIBRIDA E FLEXIVEL'
+        WHEN L.Product_name__c = 'Pós-graduação' AND  L.Product_Category__c = 'MBA'
+            THEN 'MBA'
+        WHEN L.Product_name__c = 'Pós-graduação' AND  L.Product_Category__c = 'Especialização a Distância'
+            THEN 'EAD'
+        WHEN L.Product_name__c = 'Pós-graduação' AND P.Concourse_Code__c LIKE '%GESTAO%'
+            THEN 'GESTAO'
+        WHEN L.Product_name__c = 'Graduação' AND  L.Product_Category__c = 'Graduação em Medicina'
+            THEN 'MEDICINA'
+        WHEN L.Product_name__c = 'Graduação' AND  L.Product_Category__c = 'Graduação em Enfermagem'
+            THEN 'ENFERMAGEM'
+        WHEN L.Product_name__c = 'Graduação' AND  L.Product_Category__c = 'Graduação em Fisioterapia'
+            THEN 'FISIOTERAPIA'
+        WHEN L.Product_name__c = 'Curta Duração' AND  L.Product_Category__c IN ('Atualização em Gestão Presencial','Atualização em Gestão Ao Vivo',
+        'Atualização em Gestão','Programa Internacional','Atualização em Alta Gestão', 'Atualização em Gestão Flexível')
+            THEN 'GESTAO'
+        WHEN L.Product_name__c = 'Curta Duração' AND  L.Product_Category__c IN ('Simulação Realística','Atualização Ao Vivo','Imersão','Atualização Presencial','Atualização Flexível')
+            THEN 'CUAT'
+        WHEN L.Product_name__c = 'Curta Duração' AND  L.Product_Category__c IN ('Cursos a distância','Autoinstrucional')
+            THEN 'EAD'
+                ELSE L.Product_name__c
+        END AS TYPE,
+    L.LeadSource,
+    L.Email,
+    L.Class__C,
+    L.SKU_VTEX__c,
+    P.Category__c,
+    p.Name AS Course__c,
+    p.productcode,
+    P.Registration_Start_Date__c,
+    P.StockKeepingUnit,
+    IIF(p.Course_Link__c IS NULL,'https://ensino.einstein.br',p.Course_Link__c) AS Course_Link__c,
+    CASE
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+            THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+            THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+    END AS Phone,
+    'pt-br' AS Locale,
+    CASE
+    WHEN p.Link_Course_Image__c IS NULL /*AND p.Family = 'Eventos'*/
+        THEN 'http://image.ensinomkt.einstein.br/lib/fe3611727364047f741479/m/2/fc01dc81-8b45-4dae-8cec-7e8d4860d07b.jpg'
+    ELSE p.Link_Course_Image__c
+        END AS Link_Course_Image__c,
+    p.Enrollment_End_Date__c,
+    ROW_NUMBER() OVER (PARTITION BY L.Email ORDER BY L.Email ASC) AS RowNumber
+FROM ENT.Lead_Salesforce_Ensino AS L
+    INNER JOIN ENT.Product2_Salesforce_Ensino AS P
+        ON L.SKU_VTEX__c = P.StockKeepingUnit
+WHERE L.LEADSOURCE = 'Avise-me' 
+    AND L.OPT_IN__c = 'True'
+    AND L.HasOptedOutOfEmail = 'False'
+    AND (L.COURSE__C <> 'Produto não encontrado')
+    AND L.ISCONVERTED = 0
+    /*AND p.Course_Link__c IS NOT NULL*/
+    AND p.CATEGORY__C NOT IN ('Parcerias em Atualização', 'Cursos Gratuitos', 'Atualização Médica Personalizada')
+) AS A1
+    INNER JOIN ENT.Product2_Salesforce_Ensino AS P1
+        ON A1.ProductCode = P1.ProductCode
+WHERE A1.RowNumber < 2
+    AND CONVERT(CHAR(10), P1.Enrollment_End_Date__c , 120) = CONVERT(CHAR(10), GETDATE()+30, 120)
+    AND A1.Link_Course_Image__c IS NOT NULL
+    AND A1.Course_Link__c IS NOT NULL
+    /*  o concat dessa query é diferente das outras devido a quebra de codigo turma para avise-me  */
+    AND NOT EXISTS (
+    SELECT 1
+    FROM TB01_ULTDIAS_HISTORICO AS h
+    WHERE CONCAT(A1.ContactKey,'_',A1.ProductCode) = h.id_journey
+    OR CONCAT(A1.Email,'_',A1.ProductCode) = CONCAT(h.Email,'_',h.ProductCode)
+    )
+    /*AND A1.Email IN ('fernando.prates@einstein.br', 'einstein.fernando.prates@gmail.com', 'fdo_prates@yahoo.com.br', 'fdo_prates@hotmail.com', 'lucas.franciscovfs01@gmail.com','giovana.conc@gmail.com')*/
+    AND NOT EXISTS (
+        SELECT 1
+        FROM ent.Opportunity_Salesforce_Ensino o
+            INNER JOIN ent.Account_Salesforce_Ensino a ON o.AccountId = a.Id
+            INNER JOIN ent.ContactPointEmail_Salesforce_Ensino e ON a.Id = e.ParentId
+            INNER JOIN ent.ContactPointPhone_Salesforce_Ensino cel ON a.Id = cel.ParentId
+            INNER JOIN ent.OpportunityLineItem_Salesforce_Ensino oli ON o.Id = oli.OpportunityId
+            INNER JOIN ent.Product2_Salesforce_Ensino p ON oli.Product2Id = p.Id
+        WHERE A1.Email = e.EmailAddress
+            AND A1.ProductCode = oli.ProductCode
+    )
