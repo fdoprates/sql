@@ -1,0 +1,29 @@
+SELECT A.Email,
+        ROW_NUMBER() OVER (PARTITION BY A.Email ORDER BY A.Email ASC) AS Id,
+       CASE
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('71', '73', '74', '75', '77') THEN 'BA'
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('61') THEN 'DF'
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('62', '64') THEN 'GO'
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('31', '32', '33', '34', '35', '37', '38') THEN 'MG'
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('21', '22', '24') THEN 'RJ'
+           WHEN SUBSTRING(A.Phone, 3, 2) IN ('11', '12', '13', '14', '15', '16', '17', '18', '19') THEN 'SP'
+           ELSE 'EAD'
+       END AS Estado
+FROM (
+    SELECT L.Email, 
+           CASE
+               WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+                   THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+               WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+                   THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+               ELSE NULL
+           END AS Phone
+    FROM Ent.Lead_Salesforce_Ensino AS L
+    WHERE CASE
+              WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+                  THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+              WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+                  THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+              ELSE NULL
+          END IS NOT NULL
+) AS A
