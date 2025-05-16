@@ -1,0 +1,65 @@
+SELECT TOP 15000000
+    A1.CONTACTKEY,
+    A1.FirstName,
+    A1.LastName,
+    A1.Profession__c,
+    A1.Email,
+    A1.area_interesse,
+    A1.objeto_educacional_ids,
+    A1.id_journey
+FROM (
+    SELECT 
+        B.CONTACTKEY,
+        B.FirstName,
+        B.LastName,
+        B.Profession__c,
+        B.Email,
+        B.area_interesse,
+        B.objeto_educacional_ids,
+        B.id_journey,
+        ROW_NUMBER() OVER (PARTITION BY B.Email ORDER BY B.priority ASC) AS RowNumber
+    FROM (
+        SELECT
+            l.CONTACTKEY,
+            l.FirstName,
+            l.LastName,
+            l.Profession__c,
+            l.Email,
+            aia.area_interesse,
+            STRING_AGG(aia.objeto_educacional_id, ',') AS objeto_educacional_ids,
+            CONCAT(l.CONTACTKEY, '_', STRING_AGG(aia.objeto_educacional_id, '_')) AS id_journey,
+            MIN(aia.priority) AS priority
+        FROM Ent.Lead_Salesforce_Ensino AS l
+        INNER JOIN user_p_area_conhec AS uac 
+            ON l.Assistant_8__c = uac.user_id
+        INNER JOIN areas_de_conhecimento AS ac 
+            ON uac.area_de_conhecimento_id = ac.id
+        INNER JOIN TB02_ADE_S10AIA_AUX AS aia
+            ON ac.Id = aia.Id
+        INNER JOIN 	TB_ENGAJADOS_ADE AS eng
+            ON eng.Email = L.Email
+        WHERE l.LeadSource = 'Academia Digital'
+        AND aia.priority IN ('1','2','3')
+        AND L.email NOT LIKE '%*%'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM TB02_ADE_S1ENG_HISTORICO AS h
+            WHERE aia.objeto_educacional_id = h.id_objeto_educacional
+            AND l.Email = h.Email
+        )
+        GROUP BY l.CONTACTKEY,
+            l.FirstName,
+            l.LastName,
+            l.Profession__c,
+            l.Email,
+            aia.area_interesse
+    ) AS B
+) AS A1
+WHERE A1.RowNumber = 1
+AND NOT EXISTS (
+    SELECT 1
+    FROM TB04_ADE_S10AIA_HISTORICO AS h
+    WHERE A1.id_journey = h.id_journey
+    )
+/*AND A1.Email IN ('fernando.prates@einstein.br','einstein.fernando.prates@gmail.com','fdo_prates@yahoo.com.br','marcos.kim@einstein.br', 'fdo_prates@hotmail.com')*/
+ORDER BY A1.Email ASC
