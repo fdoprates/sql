@@ -1,0 +1,30 @@
+SELECT DISTINCT
+    E.ContactKey,
+    E.Id,
+    E.FirstName,
+    E.LastName,
+    E.Email,
+    E.Course__c,
+    E.Class__C,
+    E.Phone,
+    E.Locale,
+    E.Assistant_1__c,
+    E.Assistant_2__c,
+    E.Assistant_3__c,
+    E.Assistant_4__c,
+    E.Assistant_5__c,
+    E.Assistant_6__c,
+    E.Assistant_7__c,
+    E.Auxiliar_9__c,
+    E.Auxiliar_10__c,
+    E.Auxiliar_11__c,
+    ROW_NUMBER() OVER (PARTITION BY E.Email ORDER BY E.QueuePosition ASC) AS QueuePosition,
+    E.EntryDateQueue,
+    E.Id_journey,
+    E.SEND_WHATSAPP
+
+FROM TB01_PROSELETIVO_DESCUBRASUAPOS_FILA AS E
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM TB03_PROSELETIVO_DESCUBRASUAPOS_HISTORICO AS h
+    WHERE E.Id_journey = h.Id_journey)
