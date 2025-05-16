@@ -1,0 +1,24 @@
+SELECT TOP 1000000
+    ac.id,
+    ac.titulo AS area_interesse,
+    oe.Id AS objeto_educacional_id,
+    oe.titulo,
+    SUM(CONVERT(INT, c.segundos, 1)) AS soma_consumo,
+    ROW_NUMBER() OVER (PARTITION BY ac.id ORDER BY ac.id,SUM(CONVERT(INT, c.segundos, 1)) DESC) AS priority,
+    DATEPART(month,c.created_at) AS month,
+    DATEPART(year,c.created_at) AS year
+FROM areas_de_conhecimento AS ac
+    INNER JOIN oe_por_area_conhecimento AS oeac
+        ON ac.id = oeac.area_de_conhecimento_id
+    INNER JOIN objetos_educacionais AS oe
+        ON oeac.objeto_educacional_id = oe.id
+    INNER JOIN oe_consumo AS c
+        ON c.objeto_educacional_id = oe.id
+WHERE oe.published_at is not null
+AND DATEPART(month,c.created_at) = DATEPART(month, DATEADD(month, -1, GETDATE()))
+AND DATEPART(year,c.created_at) = DATEPART(year, GETDATE())
+AND oe.titulo NOT LIKE 'COVID-19%'
+AND oe.titulo NOT LIKE 'Pandemia: O Impacto Na%'
+GROUP BY oe.titulo, ac.titulo, ac.id, oe.Id, DATEPART(month,c.created_at),DATEPART(year,c.created_at)
+HAVING SUM(c.segundos) > 0
+ORDER BY SUM(c.segundos) DESC
