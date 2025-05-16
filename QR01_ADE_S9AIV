@@ -1,0 +1,101 @@
+SELECT TOP 150000
+    A1.CONTACTKEY,
+    A1.FirstName,
+    A1.LastName,
+    A1.Profession__c,
+    A1.Email,
+    A1.areas_de_conhecimento,
+    A1.Place,
+    A1.Estado,
+    A1.Name,
+    A1.Description,
+    A1.Link_Course_Image__c,
+    A1.Course_Link__c,
+    A1.StockKeepingUnit,
+    A1.Enrollment_End_Date__c,
+    A1.id_journey
+FROM (
+    SELECT 
+        l.CONTACTKEY,
+        l.FirstName,
+        l.LastName,
+        l.Profession__c,
+        l.Email,
+        ac.titulo AS areas_de_conhecimento,
+        CASE 
+            WHEN p.Description LIKE '%SP%' THEN 'SP'
+            WHEN p.Description LIKE '%BH%' THEN 'BH'
+            WHEN p.Description LIKE '%MG%' THEN 'BH'
+            WHEN p.Description LIKE '%RJ%' THEN 'RJ'
+            WHEN p.Description LIKE '%EAD%' THEN 'EAD'
+            WHEN p.Description LIKE '%GOIÂNIA%' THEN 'GO'
+            WHEN p.Description LIKE '%SALVADOR%' THEN 'BA'
+            ELSE 'EAD'
+        END AS Place,
+        q.Estado,
+        p.Name,
+        p.Description,
+        p.Link_Course_Image__c,
+        p.Course_Link__c,
+        p.StockKeepingUnit,
+        p.Enrollment_End_Date__c,
+        p.ProductCode,
+        ROW_NUMBER() OVER (PARTITION BY l.Email ORDER BY l.Email ASC) AS RowNumber,
+        CONCAT(l.CONTACTKEY, '_', p.ProductCode) AS id_journey
+    FROM Ent.Lead_Salesforce_Ensino AS l
+
+    INNER JOIN user_p_area_conhec AS uac 
+        ON l.Assistant_8__c = uac.user_id
+
+    INNER JOIN areas_de_conhecimento AS ac 
+        ON uac.area_de_conhecimento_id = ac.id
+
+    INNER JOIN TB_AREAS_INTERESSE_VTEX AS vae
+        ON ac.titulo = vae.Area_de_Interesse__c AND vae.Profession__c = L.Profession__c
+
+    INNER JOIN ENT.Product2_Salesforce_Ensino AS p
+        ON vae.ProductCode = p.ProductCode 
+
+    INNER JOIN TB02_ADE_S9AIV_AUX AS q
+        ON L.Email = q.Email
+
+    WHERE l.LeadSource = 'Academia Digital'
+        AND P.Enrollment_End_Date__c > GETDATE()+10
+        AND l.Profession__c = vae.Profession__c
+        AND ac.titulo = vae.Area_de_Interesse__c
+        AND (CASE 
+            WHEN p.Description LIKE '%SP%' THEN 'SP'
+            WHEN p.Description LIKE '%BH%' THEN 'BH'
+            WHEN p.Description LIKE '%MG%' THEN 'BH'
+            WHEN p.Description LIKE '%RJ%' THEN 'RJ'
+            WHEN p.Description LIKE '%EAD%' THEN 'EAD'
+            WHEN p.Description LIKE '%GOIÂNIA%' THEN 'GO'
+            WHEN p.Description LIKE '%SALVADOR%' THEN 'BA'
+            ELSE 'EAD'
+        END ) = q.Estado
+) AS A1
+WHERE A1.RowNumber = 1
+    AND NOT EXISTS(
+    SELECT 1
+    FROM TB02_ADE_S2SCORE_HISTORICO AS h
+    WHERE A1.id_journey = h.id_journey
+    )
+    AND NOT EXISTS (
+        SELECT 1
+        FROM ent.Opportunity_Salesforce_Ensino o
+            INNER JOIN ent.Account_Salesforce_Ensino a ON o.AccountId = a.Id
+            INNER JOIN ent.ContactPointEmail_Salesforce_Ensino e ON a.Id = e.ParentId
+            INNER JOIN ent.ContactPointPhone_Salesforce_Ensino cel ON a.Id = cel.ParentId
+            INNER JOIN ent.OpportunityLineItem_Salesforce_Ensino oli ON o.Id = oli.OpportunityId
+            INNER JOIN ent.Product2_Salesforce_Ensino p ON oli.Product2Id = p.Id
+        WHERE A1.Email = e.EmailAddress
+            AND A1.ProductCode = oli.ProductCode
+    )
+AND NOT EXISTS (
+    SELECT 1
+    FROM  TB02_ADE_S9AIV_HISTORICO h
+    WHERE A1.id_journey = h.id_journey
+)
+AND A1.Profession__c <> 'Estudante'
+/*AND A1.Email IN ('fernando.prates@einstein.br','einstein.fernando.prates@gmail.com','fdo_prates@hotmail.com','marcos.kim@einstein.br','fdo_prates@yahoo.com.br')*/
+ORDER BY A1.Email ASC
