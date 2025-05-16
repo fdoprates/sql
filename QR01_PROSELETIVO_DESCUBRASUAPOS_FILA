@@ -1,0 +1,111 @@
+SELECT DISTINCT 
+    A1.ContactKey,
+        A1.Id,
+        A1.FirstName,
+        A1.LastName,
+        A1.Email,
+        A1.Course__c,
+        A1.Class__C,
+        CASE
+            WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+                THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+            WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+                THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+        END AS Phone,
+        'pt-br' AS Locale,
+        A1.Assistant_1__c,
+        A1.Assistant_2__c,
+        A1.Assistant_3__c,
+        A1.Assistant_4__c,
+        A1.Assistant_5__c,
+        A1.Assistant_6__c,
+        A1.Assistant_7__c,
+        A1.Auxiliar_9__c,
+        A1.Auxiliar_10__c,
+        A1.Auxiliar_11__c,
+        A1.Id_journey,
+        A1.QueuePosition,
+        A1.EntryDateQueue,
+        A1.SKU_VTEX__c,
+        A1.SEND_WHATSAPP
+FROM (SELECT DISTINCT
+    L.ContactKey,
+    L.Id,
+    L.FirstName,
+    L.LastName,
+    L.Email,
+    L.Course__c,
+    L.Class__C,
+    CASE
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(L.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+            THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(L.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(L.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+            THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(L.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+    END AS Phone,
+    'pt-br' AS Locale,
+    L.Assistant_1__c,
+    L.Assistant_2__c,
+    L.Assistant_3__c,
+    L.Assistant_4__c,
+    L.Assistant_5__c,
+    L.Assistant_6__c,
+    L.Assistant_7__c,
+    L.Auxiliar_9__c,
+    L.Auxiliar_10__c,
+    L.Auxiliar_11__c,
+    CASE
+        WHEN L.Product_Category__c = 'Especialização a Distância'
+            THEN 1
+        WHEN L.Product_Category__c = 'Especialização Presencial' OR (L.Product_Category__c = 'Especialização Flexível' OR L.Product_Category__c = 'Especialização Híbrida')
+            THEN 1
+        WHEN L.Product_Category__c = 'Cursos a distância'
+            THEN 1
+        WHEN L.Product_Category__c = 'Atualização em Gestão Ao Vivo'
+            THEN 1
+        WHEN L.Product_Category__c = 'Simulação Realística'
+            THEN 1
+        WHEN L.Product_Category__c = 'Atualização Ao Vivo'
+            THEN 1
+        WHEN L.Product_Category__c = 'Atualização Flexível'
+            THEN 1
+        ELSE 0
+        END AS SEND_WHATSAPP,
+    IIF(L.Assistant_7__c = L2.Assistant_7__c, CONCAT(L.Email, REPLACE(REPLACE(L.Assistant_7__c, ' ', ''),' ','_')), L.Assistant_7__c) AS Id_journey,
+    L.SKU_VTEX__c,
+    ROW_NUMBER() OVER (PARTITION BY L.Email ORDER BY L.Email ASC) AS QueuePosition,
+    GETDATE()
+        AT TIME ZONE 'Central America Standard Time'
+        AT TIME ZONE 'Pacific SA Standard Time'
+    AS EntryDateQueue
+
+FROM ENT.Lead_Salesforce_Ensino AS L
+
+    INNER JOIN ENT.Lead_Salesforce_Ensino AS L2
+    ON L.ContactKey = L2.ContactKey
+    
+    /*LEFT JOIN TB04_PROSELETIVO_DESCUBRASUAPOS_FILAUPDATE AS FU
+    ON L.ContactKey = FU.ContactKey*/
+
+WHERE CONVERT(CHAR(10), l.LastModifiedDate , 120) between CONVERT(CHAR(10), GETDATE()-30, 120) AND CONVERT(CHAR(10), GETDATE(), 120) 
+    AND L.LeadSource = 'Form'
+    AND L.Assistant_8__c = 'Descubra a sua Pós'
+    AND L.opt_in__c = 'True'
+    AND L.ISCONVERTED = 0
+    /* COMENTADO PRA OS PRIMEIROS TESTE, DEPOIS RETIRAR O COMENTARIO AND (L.Course__c <> 'Produto não encontrado')   */
+    AND L.HasOptedOutOfEmail = 'False'
+    AND L.Status in ('New', 'Aberto - Não contatado')
+    /*AND (L.FirstName NOT LIKE '%TESTE%')*/
+    ) AS A1
+    WHERE NOT EXISTS (
+    SELECT 1
+    FROM TB03_PROSELETIVO_DESCUBRASUAPOS_HISTORICO AS h
+    WHERE (
+    /*A1.ContactKey = h.ContactKey 
+    OR*/ A1.Id_journey = h.Id_journey
+            )
+    )
+    AND A1.Id_journey IS NOT NULL
+    AND A1.Assistant_7__c IS NOT NULL
+    AND A1.Assistant_1__c NOT IN ('Graduação Incompleta','Ensino Médio Incompleto','Ensino Médio Completo')
+    /*AND A1.Email in ('giovana.conceicao@einstein.br', 'lucasviniciusfs01@gmail.com', 'fernando.prates@einstein.br', 'marcos.kim@einstein.br')*/
+    /*AND QueuePosition > 1*/
