@@ -1,0 +1,3 @@
+SELECT SubscriberKey, EmailAddress, Status_Saturacao, Data_Status
+FROM Tb_ContatosEmail_Geral_SaturadosENaoSaturados
+WHERE Status_Saturacao = 'Saturated'
