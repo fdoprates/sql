@@ -1,0 +1,27 @@
+SELECT DISTINCT
+    CONTACTKEY,
+    FirstName,
+    LastName,
+    Email,
+    PHONE,
+    'pt-br' AS Locale,
+    SUBSTRING(phone,3,2) AS DDD
+FROM (SELECT
+    CONTACTKEY,
+    LeadSource,
+    FirstName,
+    LastName,
+    Email,
+    Profession__c,
+    CASE
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+            THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+            THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+    END AS Phone,
+    Opt_in__c,
+    HasOptedOutOfEmail
+FROM Ent.Lead_Salesforce_Ensino) AS A
+WHERE HasOptedOutOfEmail = 0
+    AND SUBSTRING(phone,3,2) IN (11,12,13,14,15,16,17,18,19,21,22,24,31,32,33,34,35,37,38,27,28)
+    AND Opt_in__c = 1
