@@ -1,0 +1,62 @@
+
+/* ----------------------- versao data view -----------------*/
+SELECT DISTINCT
+    B.SubscriberKey,
+    C.Email,
+        CASE
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 
+            THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+        WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13
+            THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(C.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+    END AS Phone,
+    A.JobID,
+    A.FromName,
+    A.JobStatus,
+    A.EmailName,
+    B.URL
+FROM _JOB AS A 
+    INNER JOIN _CLICK AS B ON A.JobID = B.JobID
+    INNER JOIN ENT.Lead_Salesforce_Ensino AS C ON B.SubscriberKey = C.ContactKey
+WHERE (A.EmailName LIKE '%POS%')
+    /*AND C.HasOptedOutOfEmail = 0*/
+    AND B.URL LIKE '%RIO%'
+
+
+/*-----------------VERSÃO SEND LOG---------------------*/
+SELECT
+Email,
+URL,
+CONVERT(CHAR(10), EventDate,120) AS DT_ENVIO
+FROM SendLog_Email_Ensino_Click
+WHERE URL LIKE '%p4624%'
+
+
+
+
+
+
+
+
+
+SELECT DISTINCT
+    B.SubscriberKey,
+    C.Email,
+    A.JobID,
+    A.FromName,
+    A.JobStatus,
+    A.EmailName,
+    B.URL
+FROM _JOB AS A 
+    INNER JOIN _CLICK AS B ON A.JobID = B.JobID
+    INNER JOIN ENT.Lead_Salesforce_Ensino AS C ON B.SubscriberKey = C.ContactKey
+WHERE (A.EmailName LIKE '%CUAT%')
+    /*AND HasOptedOutOfEmail = 0*/
+
+
+
+SELECT 
+    A.EmailName,
+    B.URL
+FROM _JOB AS A 
+    INNER JOIN _CLICK AS B ON A.JobID = B.JobID
+WHERE A.EmailName = '20220517-_-EVENTOS-_-NEWSLETTER-_-MAIO-_-VENDA'
