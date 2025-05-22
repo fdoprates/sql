@@ -1,0 +1,12 @@
+SELECT
+    a.EmailName,
+    COALESCE(COUNT(DISTINCT c.SubscriberKey), 0) AS TotalClicksCarrinho,
+    CONVERT(VARCHAR, GETDATE(), 101) AS DataAtualizacao
+FROM
+    Tb_Acomp_BlocosModulares a
+LEFT JOIN
+    _Job j ON a.EmailName = j.EmailName
+LEFT JOIN
+    _Click c ON j.JobID = c.JobID AND c.LinkContent LIKE '%utm_content=bmca%'
+GROUP BY
+    a.EmailName
