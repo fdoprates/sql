@@ -1,0 +1,18 @@
+SELECT
+    j.EmailName,
+    COUNT(DISTINCT h.ContactKey) AS TotalViewsCarrinho,
+    CONVERT(VARCHAR, GETDATE(), 101) AS DataAtualizacao
+FROM
+    _Job j
+INNER JOIN
+    _Sent s ON j.JobID = s.JobID
+INNER JOIN
+    TB02_CARRINHO_ABANDONADO_HISTORICO h ON s.SubscriberKey = h.ContactKey
+WHERE
+    j.EmailName LIKE '2024%'
+AND j.EmailName NOT LIKE '202401%'
+AND j.EmailName NOT LIKE '202402%'
+AND j.EmailName NOT LIKE '202403%'
+AND CONVERT(VARCHAR, h.EntryDate, 101) BETWEEN CONVERT(VARCHAR, DATEADD(day, -21, s.EventDate), 101) AND CONVERT(VARCHAR, s.EventDate, 101)
+GROUP BY
+    j.EmailName
