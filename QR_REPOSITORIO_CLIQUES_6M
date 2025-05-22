@@ -1,0 +1,52 @@
+SELECT
+    temp.SubscriberKey AS ContactKey,
+    temp.email,
+    temp.FirstName,
+    temp.LastName,
+    temp.Phone,
+    'pt-br' AS locale,
+    temp.LeadSource,
+    temp.Opt_in__c,
+    temp.JobID,
+    temp.CategoriaLastClick,
+    temp.ClickDate,
+    temp.URL
+FROM (
+    SELECT
+        s.SubscriberKey,
+        s.EmailAddress AS Email,
+        c.JobID,
+        c.URL,
+        c.EventDate AS ClickDate,
+        l.FirstName,
+        l.LastName,
+        CASE
+            WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 11 THEN CONCAT('55', REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) 
+            WHEN LEN(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')) = 13 THEN REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(l.Phone, ')', ''), '(', ''), '+', ''), ' ', ''), '-', '')
+        END AS Phone,
+        'pt-br' AS locale,
+        l.LeadSource,
+        l.Opt_in__c,
+        ROW_NUMBER() OVER (PARTITION BY s.EmailAddress ORDER BY c.EventDate DESC) AS RowNum,
+        CASE
+            WHEN c.URL LIKE '%ensino.einstein.br/pos%' AND (c.URL LIKE '%gestao%' OR c.URL LIKE '%gt%') AND c.URL LIKE '%ead%' AND c.URL NOT LIKE '%mba%' THEN 'Pós gestão EAD'
+            WHEN c.URL LIKE '%ensino.einstein.br/pos%' AND c.URL LIKE '%ead%' AND c.URL NOT LIKE '%mba%' THEN 'Pós EAD geral'
+            WHEN c.URL LIKE '%ensino.einstein.br/pos%' AND (c.URL LIKE '%gestao%' OR c.URL LIKE '%gt%') AND c.URL NOT LIKE '%mba%' THEN 'Pós gestão geral'
+            WHEN c.URL LIKE '%ensino.einstein.br/pos%' AND c.URL NOT LIKE '%mba%' THEN 'Pós geral'
+            WHEN c.URL LIKE '%ensino.einstein.br/mba%' OR c.URL LIKE '%pos-graduacao/mba%' OR c.URL LIKE '%post-mba%' THEN 'MBA'
+            WHEN c.URL LIKE '%ensino.einstein.br/graduacao%' THEN 'Graduação'
+            WHEN (c.URL LIKE '%curta-duracao%' OR c.URL LIKE '%ensino.einstein.br/curso%') AND (c.URL LIKE '%curso_gt%' OR c.URL LIKE '%curso_inter%') THEN 'CUAT gestão'
+            WHEN c.URL LIKE '%curta-duracao%' OR c.URL LIKE '%ensino.einstein.br/curso%' THEN 'CUAT geral'
+            WHEN c.URL LIKE '%evento%' THEN 'Eventos'
+        ELSE 'Outro'
+    END AS CategoriaLastClick
+    FROM
+        ent._Subscribers s
+    INNER JOIN
+        ent._Click c ON s.SubscriberKey = c.SubscriberKey
+    INNER JOIN
+        ent.Lead_Salesforce_Ensino l ON s.SubscriberKey = l.ContactKey
+) AS temp
+WHERE
+    temp.RowNum = 1
+AND temp.CategoriaLastClick NOT LIKE '%Outro%'
