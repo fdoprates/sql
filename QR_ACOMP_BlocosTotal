@@ -1,0 +1,9 @@
+SELECT
+    EmailName,
+    SUM(TotalViewsCarrinho + TotalViewsAviseMe + TotalViewsS3Funil + TotalViewsS1Eng + TotalViewsS4UltaAcess + TotalViewsDefault) AS TotalViews,
+    SUM(TotalClicksCarrinho + TotalClicksAviseMe + TotalClicksS3Funil + TotalClicksS1Eng + TotalClicksS4UltaAcess + TotalClicksDefault) AS TotalClicks,
+    CONVERT(VARCHAR, GETDATE(), 101) AS DataAtualizacao
+FROM
+    Tb_Acomp_BlocosModulares
+GROUP BY 
+    EmailName
