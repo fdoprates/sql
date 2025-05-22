@@ -1,0 +1,14 @@
+SELECT DISTINCT
+    B.SubscriberKey,
+    C.Email,
+    A.JobID,
+    A.EmailName,
+    B.EventDate,
+    B.URL,
+    CONCAT(B.SubscriberKey,'_',A.JobID,'_',ROW_NUMBER() OVER(ORDER BY A.JobID DESC)) AS ID
+FROM _JOB AS A 
+    INNER JOIN _CLICK AS B ON A.JobID = B.JobID
+    INNER JOIN ENT.Lead_Salesforce_Ensino AS C ON B.SubscriberKey = C.ContactKey
+WHERE DATEDIFF(MONTH, B.EventDate, GETDATE()) BETWEEN 0 AND 1
+AND B.IsUnique = 1
+AND B.URL IS NOT NULL
