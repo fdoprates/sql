@@ -1,0 +1,11 @@
+SELECT
+    OYBAccountID,
+    Business_Unit,
+    Qtd_Unsubscribers,
+    Qtd_Bounces,
+    Qtd_Sents,
+    Qtd_Opens,
+    Qtd_Clicks,
+    Qtd_Complaints
+FROM
+    REP_FromSFMC_DataViews_EnsinoEinstein
