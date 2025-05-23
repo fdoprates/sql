@@ -1,0 +1,66 @@
+SELECT
+    REPLACE(REPLACE(SkuID, '|', '-'), '*', '') AS SkuID,
+    REPLACE(REPLACE(ProductName, '|', '-'), '*', '') AS ProductName,
+    REPLACE(REPLACE(REPLACE(REPLACE(Description,'|', '-'), '*', ''),CHAR(13),''),CHAR(10),'') AS Description,
+    REPLACE(REPLACE(ProductLink, '|', '-'), '*', '') AS ProductLink,
+    REPLACE(REPLACE(ProductType, '|', '-'), '*', '') AS ProductType,
+    REPLACE(REPLACE(ImageLink, '|', '-'), '*', '')  AS ImageLink,
+    REPLACE(REPLACE(Color, '|', '-'), '*', '') AS Color,
+    REPLACE(REPLACE(ProductCode, '|', '-'), '*', '') AS ProductCode,
+    CONVERT(VARCHAR(10),ReleaseDate,23) AS ReleaseDate, /*estilo 23 corresponde a YYYY-MM-DD recomendado em https://help.salesforce.com/s/articleView?id=sf.mc_pb_reserved_attributes.htm&type=5*/
+    REPLACE(REPLACE(RegularPrice, '|', '-'), '*', '') AS RegularPrice,
+  /*REPLACE(REPLACE(Keywords, '|', '-'), '*', '') AS Keywords,--> Não obrigatorio para o catálogo do Einstein*/
+    CASE
+        WHEN Active = 'True' THEN 'Y'
+        WHEN Active = 'False' THEN 'N'
+    ELSE REPLACE(Active, '|', '-')
+    END AS Availability,
+    REPLACE(REPLACE(NumReviews, '|', '-'), '*', '') AS NumReviews,
+
+    REPLACE(REPLACE(Rating, '|', '-'), '*', '') AS Rating,
+    REPLACE(REPLACE(SalePrice, '|', '-'), '*', '') AS SalePrice,
+    REPLACE(REPLACE(BrandName, '|', '-'), '*', '') AS BrandName,
+    SUBSTRING(
+        ImageLink,
+        LEN(ImageLink) - CHARINDEX('P', REVERSE(ImageLink), 3) + 1,
+        CHARINDEX('.jpg', ImageLink) - (LEN(ImageLink) - CHARINDEX('P', REVERSE(ImageLink), 3) + 1)
+    ) AS ContentID, /* adicionar o ContentID na TB_FINAL */
+    ReleaseDate AS ReleaseDatetime /*mantém o campo ReleaseDate no formato Date para sorting dentro do MCE*/
+FROM
+    TB_CATALOGO_PRODUTOS
+
+------------------------------------------------------------------------------
+
+SELECT
+    SkuID,
+    ProductCode, 
+    BrandName, 
+    ProductType, 
+    ProductName, 
+    Description, 
+    Active,
+    ReleaseDate, 
+    ProductLink,
+    ImageLink, 
+    RegularPrice,
+    SalePrice,
+    Color,
+    Keywords,
+    Rating,
+    NumReviews,
+    ContentID,
+    Concat(
+        CASE
+            WHEN ProductName IS null OR ProductName = '' THEN 'ProductName Is Empty '
+        END,
+        CASE
+            WHEN ProductLink IS null OR ProductLink = '' THEN 'ProductLink is Empty '
+        END
+    ) AS ErrorType
+FROM
+    TB_CATALOGO_PRODUTOS
+WHERE
+    ProductName IS null OR
+    ProductName = '' OR
+    ProductLink IS null OR
+    ProductLink = ''
