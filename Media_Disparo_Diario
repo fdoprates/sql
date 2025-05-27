@@ -1,0 +1,68 @@
+SELECT
+    Nome_Email,
+    Sent_30,
+    Sent,
+    AVG(Sent_30) / 30 as Media
+FROM (
+    SELECT
+        j.emailname as Nome_Email,
+        s.jobid,
+        SUM(CASE WHEN CONVERT(date, s.eventdate) = CONVERT(date, GETDATE()-1) THEN 1 ELSE 0 END) as Sent,
+        COUNT(CASE WHEN CONVERT(date, s.eventdate) BETWEEN CONVERT(date, GETDATE()-30) AND CONVERT(date, GETDATE()-1) THEN 1 END) as Sent_30
+    FROM 
+        _Job j
+        INNER JOIN _Sent s ON j.Jobid = s.jobid
+        INNER JOIN _JourneyActivity ja ON s.TriggererSendDefinitionObjectID = ja.JourneyActivityObjectID
+        INNER JOIN _Journey jo ON ja.VersionID = jo.VersionID
+    WHERE
+        CONVERT(date, eventdate) BETWEEN CONVERT(date, GETDATE()-30) AND CONVERT(date, GETDATE()-1)
+        AND j.emailname LIKE '%jor%'
+        AND jo.JourneyStatus = 'Running'
+       
+    GROUP BY j.emailname, s.jobid
+) AS SubQueryAlias
+GROUP BY Nome_Email, Sent_30, Sent
+
+
+------------
+SELECT
+    CAST(Sent AS INT) AS Sent,
+    Nome_Email,
+    CAST(Media AS INT) AS Media,
+    CASE 
+        WHEN Media = 0 THEN 0
+        ELSE CAST(ROUND((CAST(Sent AS FLOAT) * 100.0) / CAST(Media AS FLOAT), 2) AS DECIMAL(10, 2))
+    END AS Porcentagem
+FROM (
+    SELECT
+        ISNULL(a.Sent, 0) AS Sent,
+        j.emailname AS Nome_Email,
+        ISNULL(a.Media, 0) AS Media
+    FROM 
+        Tb00_Media_Disparo_Diario a
+        INNER JOIN _Job j ON a.Nome_Email = j.EmailName
+        INNER JOIN _Sent s ON j.Jobid = s.jobid
+    WHERE
+        CONVERT(char(10), s.eventdate, 120) = CONVERT(char(10), GETDATE() - 1, 120)
+    GROUP BY j.emailname, a.Sent, a.Media
+) AS subquery
+--------------------------------
+select
+    Convert(char(10), GETDATE(), 120) as Data_Report,
+    Convert(char(10), GETDATE()-1, 120) as Data_Consulta,
+    s.Nome_Email,
+    j.FromName,
+    jo.JourneyName      AS Nome_Jornada,
+    jo.JourneyStatus    AS Status_Jornada,
+    CASE
+        WHEN Porcentagem IS NULL THEN '0'
+        ELSE Porcentagem
+    END AS Porcentagem
+from 
+    _Job j
+    INNER JOIN 	Tb00_Media_Disparo_Diario s on j.EmailName = s.Nome_Email
+        INNER JOIN _JourneyActivity ja ON ja.JourneyActivityObjectID = j.TriggererSendDefinitionObjectID
+            INNER JOIN _Journey jo ON jo.VersionID = ja.VersionID
+WHERE
+    jo.JourneyStatus = 'Running'
+    
