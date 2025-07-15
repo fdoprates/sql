@@ -17,3 +17,39 @@ ON 1. EmailAddress - eins.email address
 WHERE O.RN 7= 2
 AND DATEDIFF (MONTH, O-EventDate, GETDATE()) BETWEEN ® AND 6
 GROUP BY eins.EnailEngagenentPersona
+
+
+
+
+SELECT
+2
+3
+eins.EmailEngagementPersona
+, AVG(o.RN) AS MediaRN
+4
+, COUNT (o.SubscriberKey) AS
+FROM (SELECT TOP 10000000
+QTD
+6
+7
+SubscriberKey,
+COUNT (SubscriberKey) AS RN
+FROM _Open
+WHERE ISUNIQUE = 1
+10
+11
+12
+13
+14
+15
+16
+17
+18
+AND DATEDIFF (MONTH, EventDate, GETDATE()) BETWEEN • AND 2
+GROUP BY SubscriberKey
+ORDER BY SubscriberKey DESC) AS o
+INNER JOIN ent.icarros_aceita_comunicacao_icarros_pf_optin_1sg4x000000kBnpQAE_85R4X0000000RtDUU_I 1
+ON 1. SubscriberKey = o. SubscriberKey
+INNER JOIN Einstein_MC_Predictive_Scores AS eins
+ON 1. EmailAddress = eins.email_address*
+GROUP BY eins.EmailEngagementPersona
