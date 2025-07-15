@@ -1,0 +1,19 @@
+SELECT
+eins .EmailEngagementPersona, COUNT (1 .EmailAddress) AS QTD,
+AVG(O.RN) AS MediaRN
+FROM ISUNIQUE = 1
+FROM (
+SELECT
+subscriberkey, JobID, EventDate, Domain,
+ROW NUMBER) OVER(PARTITION BY SubscriberKey ORDER BY EventDate DESC) AS RN
+FROM _Open
+WHERE) AS o
+INNER JOIN INCLUIR_BASE_COM_TODOS_OS_DADOS 1
+ON 1. Subscriberkey = o. SubscriberKey
+INER JOIN _J0B AS J
+ON 0. JobID = J.J0bID
+LANER JOIN Einstein MC_Predictive _Scores AS eins
+ON 1. EmailAddress - eins.email address
+WHERE O.RN 7= 2
+AND DATEDIFF (MONTH, O-EventDate, GETDATE()) BETWEEN ® AND 6
+GROUP BY eins.EnailEngagenentPersona
