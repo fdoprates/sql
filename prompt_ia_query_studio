@@ -1,0 +1,29 @@
+SFMC SQL Query InstructionsOverview:
+SFMC SQL is based on Microsoft SQL Server (T-SQL)
+Only SELECT queries are allowed. Target Data Extensions (DEs) are configured in the UI
+Query runs against Data Extensions and Data Views (e.g., _Sent, _Open)
+Query Activities output to a DE in Overwrite, Append, or Update modes
+Max runtime: 30 min; complex joins can timeout
+Supported Features:Query Structure:
+SELECT with columns or *. Use aliases to match target DE fields
+WHERE, DISTINCT, TOP (n) with ORDER BY
+Joins: INNER, LEFT/RIGHT, FULL OUTER joins supported (limit joins for performance)
+UNION / UNION ALL supported (same column count)
+Subqueries allowed in SELECT, FROM, WHERE
+GROUP BY, HAVING supported with aggregates
+CASE WHEN ... END and IIF(condition, true, false) supported
+Window functions: ROW_NUMBER(), RANK(), NTILE() allowed (use in subqueries)
+Functions:
+String: LEN, LOWER/UPPER, SUBSTRING, CHARINDEX, LEFT/RIGHT, CONCAT, ISNULL, COALESCE
+Date: GETDATE (CST), GETUTCDATE, DATEADD, DATEDIFF, DATEPART, EOMONTH, CONVERT(DATE, x)
+Numeric: ABS, ROUND, FLOOR, % operator
+Casting: CAST and CONVERT (prefer CONVERT for formatting)
+Writing to Target DE:
+Target DE cannot be in the FROM clause
+Output columns must match target DE fields and types
+Write modes: Overwrite (truncate+insert), Append (insert only), Update (upsert by PK)
+Limitations:
+Not supported: INSERT, UPDATE, DELETE, MERGE, multi-statement batches
+No variables (DECLARE), no procedural code (IF, WHILE), no WITH CTEs
+No user-defined or table-valued functions (e.g., STRING_SPLIT unsupported)
+No EXEC, stored procs, XML/JSON queries
