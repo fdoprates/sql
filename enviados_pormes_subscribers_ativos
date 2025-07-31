@@ -1,0 +1,316 @@
+📘 Documentação Técnica – Relatório de Impacto Mensal por Subscribers (SFMC)
+Objetivo
+
+Criar uma estrutura de monitoramento mensal no Salesforce Marketing Cloud (SFMC) que registre:
+1. Total de pessoas únicas impactadas (envios) por mês
+2. Total de impactados ativos por mês (baseado em Status = 'Active' no momento da execução)
+3. Tamanho total da base ativa atual
+4. Data de execução da extração
+A estrutura deve armazenar dados historicamente, sem sobrescrever entradas anteriores.
+
+Estrutura da Data Extension (DE)
+Nome sugerido: Impacto_Mensal_Historico
+
+Campo
+
+Tipo
+
+Obrigatório
+
+Descrição
+
+Month
+
+Text
+
+Sim
+
+Mês (MM) do período calculado
+
+Year
+
+Text
+
+Sim
+
+Ano (YYYY) do período calculado
+
+UniqueSubscribers
+
+Number
+
+Sim
+
+Pessoas ativas que receberam e-mails no mês
+
+SentCount
+
+Number
+
+Sim
+
+Pessoas únicas que receberam e-mails no mês
+
+TotalActiveSubscribersNow
+
+Number
+
+Sim
+
+Total de subscribers ativos na data da execução
+
+CreatedDate
+
+Date
+
+Sim
+
+Data e hora da execução da query
+
+Modo de escrita: Append
+Chave primária opcional: Month + Year
+
+Query SQL – Histórico dos Últimos 6 Meses (Otimizada)
+Para evitar timeout com bases muito grandes (ex: >11 milhões de subscribers), a query é fracionada por mês.
+Execute uma query por vez, substituindo o valor de OFFSET (-n) conforme o mês desejado.
+
+--- Mês OFFSET: -0 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -0, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -0, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -0, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -0, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -0, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -0, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+--- Mês OFFSET: -1 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -1, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -1, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -1, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -1, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -1, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -1, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+--- Mês OFFSET: -2 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -2, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -2, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -2, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -2, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -2, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -2, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+--- Mês OFFSET: -3 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -3, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -3, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -3, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -3, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -3, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -3, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+--- Mês OFFSET: -4 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -4, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -4, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -4, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -4, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -4, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -4, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+--- Mês OFFSET: -5 ---
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(DATEADD(MONTH, -5, GETDATE())) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(DATEADD(MONTH, -5, GETDATE())) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -5, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -5, GETDATE()))
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(DATEADD(MONTH, -5, GETDATE()))
+           AND YEAR(s.EventDate) = YEAR(DATEADD(MONTH, -5, GETDATE()))
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+Query SQL – Versão Mensal Automatizada
+Essa versão é usada para agendamento mensal (ex: primeiro dia de cada mês), capturando dados do mês atual.
+
+
+SELECT
+   RIGHT('0' + CAST(MONTH(GETDATE()) AS VARCHAR), 2) AS Month,
+   CAST(YEAR(GETDATE()) AS VARCHAR) AS Year,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       INNER JOIN _Subscribers sub ON s.SubscriberKey = sub.SubscriberKey
+       WHERE
+           MONTH(s.EventDate) = MONTH(GETDATE())
+           AND YEAR(s.EventDate) = YEAR(GETDATE())
+           AND sub.Status = 'Active'
+   ) AS UniqueSubscribers,
+
+   (
+       SELECT COUNT(DISTINCT s.SubscriberKey)
+       FROM _Sent s
+       WHERE
+           MONTH(s.EventDate) = MONTH(GETDATE())
+           AND YEAR(s.EventDate) = YEAR(GETDATE())
+   ) AS SentCount,
+
+   (
+       SELECT COUNT(DISTINCT SubscriberKey)
+       FROM _Subscribers
+       WHERE Status = 'Active'
+   ) AS TotalActiveSubscribersNow,
+
+   GETDATE() AS CreatedDate
+
+Validação e Considerações Finais
+
+- A DE deve conter 1 linha por mês executado.
+- Campos Month e Year devem estar corretos.
+- SentCount e UniqueSubscribers devem ser diferentes, refletindo o filtro de status.
+- TotalActiveSubscribersNow é constante por execução.
+- A versão mensal deve ser agendada com modo Append.
+- As queries fracionadas devem ser executadas uma de cada vez para evitar timeout.
