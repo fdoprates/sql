@@ -1,0 +1,25 @@
+SELECT DISTINCT
+COUNT (DISTINCT S.Subscriberkey) AS NewSubscribers, DATEPART(MONTU, 9.DateJoined) A5 Month, DATEPART(YEAR, s.DateJoined) AS Vear,
+GETDATE() AS InsertDate
+FROM
+_Subscribers s
+WHERE S.Status = 'active"
+ANID
+s.DateJoined ›= DATEADD(MONTH, -6, GETDATE()) AND s.DateJoined <= GETDATE()
+group by
+- DATEPART(MONTH, s.Dateloined),
+DATEPART(YEAR, s.Dateloined)
+/* SENT*/ SELECT DISTINCT
+COUNIT (DISTINCT s-Subscriberkey) AS SentCount, DATEPART(MONTH, s.EventDate) AS Month, DATEPART(YEAR, S.EventDate) AS Year, GETDATE() AS InsertDate
+FROM
+Sent s
+HHERE
+s.EventDate >= DATEADD(MONTH, -6, GETDATEO)) AND S.EventDate ‹= GETDATE() GROUP BY DATEPART(MONTH, s.EventDate),
+DATEPART(VEAR, S.EventDate)
+/* active now +/ SELECT DISTINCT
+COUNT(DISTINCT s.Subscriberkey) AS TotalAct1veSubscrlbersNow.
+DATEPART(HONTH, GETDATE()) AS Month, DATEPART(VEAR, GETDATE()) AS Vear,
+GETDATE() AS InsertDate
+FROM
+_Subscribers s
+WHERE s.Status = *active'
